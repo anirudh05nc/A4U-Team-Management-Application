@@ -229,6 +229,23 @@ class _TasksPageState extends State<TasksPage> {
 
         List<Task> tasks = snapshot.data!;
 
+        tasks.sort((a, b) {
+          int getStatusPriority(String status) {
+            if (status == 'pending') return 0;
+            if (status == 'completed') return 2;
+            return 1;
+          }
+
+          final statusA = getStatusPriority(a.status);
+          final statusB = getStatusPriority(b.status);
+
+          if (statusA != statusB) {
+            return statusA.compareTo(statusB);
+          }
+
+          return a.dueDate.toDate().compareTo(b.dueDate.toDate());
+        });
+
         return LayoutBuilder(
           builder: (context, constraints) {
             bool isDesktop = constraints.maxWidth > 800;

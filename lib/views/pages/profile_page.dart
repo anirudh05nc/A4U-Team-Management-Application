@@ -243,9 +243,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     Center(child: Column(
                       children: [
-                        Text('TEAM A 4 U', style: TextStyle(color: Colors.white),),
-                        Text("ANIRUDH - VENUNADH - THAHA - DILEEP", style: TextStyle(color: Colors.white),),
-                        //Text("ANIRUDH VENUNADH THAHA DILEEP(🌧️3️⃣👁️)", style: TextStyle(color: Colors.white),)
+                        Text('ANIRUDH NAGINAYANI CHERUVU', style: TextStyle(color: Colors.white),),
                       ],
                     ))
                   ],

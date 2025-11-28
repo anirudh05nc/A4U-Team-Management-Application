@@ -2,6 +2,7 @@ import 'package:assistantforu/models/room_model.dart';
 import 'package:assistantforu/models/user_model.dart';
 import 'package:assistantforu/services/room_service.dart';
 import 'package:assistantforu/services/user_service.dart';
+import 'package:assistantforu/views/pages/chat_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../utils/AppStyles.dart';
@@ -30,7 +31,7 @@ class _TeamPageState extends State<TeamPage> {
 
   void _fetchUserRoom() async {
     if (_currentUser != null) {
-      final room = await _roomService.getRoomForUser(_currentUser.uid);
+      final room = await _roomService.getRoomForUser(_currentUser!.uid);
       if (mounted) {
         setState(() {
           _room = room;
@@ -103,27 +104,26 @@ class _TeamPageState extends State<TeamPage> {
                   return;
                 }
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Joining room...')),
-                );
+                setState(() {
+                  _isLoading = true;
+                });
 
-                Room? joinedRoom = await _roomService.joinRoom(roomId, _currentUser!.uid);
-
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                final Room? joinedRoom = await _roomService.joinRoom(roomId, _currentUser!.uid);
 
                 if (joinedRoom != null) {
-                  setState(() {
-                    _room = joinedRoom;
-                    _roomStream = _roomService.getRoomStream(joinedRoom.id);
-                  });
+                  _fetchUserRoom();
+                  if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Successfully joined room!')),
                   );
                 } else {
+                  if (!mounted) return;
+                  setState(() {
+                    _isLoading = false;
+                  });
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Failed to join room. You might be in a room already or the ID is invalid.')),
                   );
-                  _fetchUserRoom();
                 }
               },
               child: const Text('Join'),
@@ -173,7 +173,7 @@ class _TeamPageState extends State<TeamPage> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Room'),
-          content: const Text('Are you sure you want to delete this room?n cannot be undone.'),
+          content: const Text('Are you sure you want to delete this room? This cannot be undone.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -229,14 +229,26 @@ class _TeamPageState extends State<TeamPage> {
 
   @override
   Widget build(BuildContext context) {
-    return GradientScaffold( // <-- WRAP WITH GRADIENT SCAFFOLD
-      body: Builder( // Use a Builder to get the right context if needed, though direct return is fine here
+    return GradientScaffold(
+      floatingActionButton: _room != null
+      ? FloatingActionButton(
+        backgroundColor: AppColors.accentColor,
+        foregroundColor: AppColors.primaryColor,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChatPage(room: _room!),
+            ),
+          );
+        },
+        child: Icon(Icons.chat),
+      ): null,
+      body: Builder(
         builder: (context) {
           if (_isLoading) {
-            // Still show a loading indicator, but now it's on top of the gradient
             return const Center(child: CircularProgressIndicator(color: Colors.white));
           }
-          // This part remains the same, it just decides what to show in the body
           return _room == null ? _buildRoomActions() : _buildTeamView();
         },
       ),
@@ -357,7 +369,7 @@ class _TeamPageState extends State<TeamPage> {
               return const ListTile(title: Text("Loading...", style: TextStyle(color: Colors.white70)));
             }
             if (snapshot.hasError) {
-              return ListTile(title: Text('Error loading member', style: TextStyle(color: Colors.red)));
+              return const ListTile(title: Text('Error loading member', style: TextStyle(color: Colors.red)));
             }
             if (snapshot.hasData) {
               final user = snapshot.data!;
